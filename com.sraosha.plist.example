@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sraosha</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <!-- Adapt this path to your Node.js installation -->
+        <string>/opt/homebrew/bin/node</string>
+        <!-- Adapt this path to where you cloned sraosha -->
+        <string>/Users/YOURNAME/.sraosha/sraosha.mjs</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/YOURNAME/.sraosha</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/YOURNAME/.sraosha/stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/YOURNAME/.sraosha/stderr.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <!-- Include the directory where claude CLI is installed -->
+        <string>/Users/YOURNAME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key>
+        <string>/Users/YOURNAME</string>
+    </dict>
+
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+</dict>
+</plist>

@@ -1,0 +1,14 @@
+{
+  "name": "sraosha",
+  "version": "1.3.0",
+  "description": "Wake-on-LAN for Claude Code — remote wake daemon via Telegram",
+  "main": "sraosha.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node sraosha.mjs"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "license": "MIT"
+}
