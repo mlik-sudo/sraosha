@@ -5,10 +5,10 @@
 Sraosha est un **wake layer minimal** : un daemon Telegram léger qui réveille et prépare Claude Code sur le Mac, depuis un iPhone.
 
 ```
-iPhone (Telegram) → Sraosha (@sraosha_saheb_bot) → réveille Claude Code
-                                                  → lance claude-tg
-                                                  → Saheb communique avec Claude
-                                                     via le canal officiel
+iPhone (Telegram) → Sraosha (@your_sraosha_bot) → réveille Claude Code
+                                                 → lance claude-tg
+                                                 → l'utilisateur communique avec Claude
+                                                    via le canal officiel
 ```
 
 ## Ce que Sraosha est
@@ -58,10 +58,10 @@ Depuis l'iPhone, il est **impossible** de cliquer sur le dialogue TCC qui appara
 
 |                  | Sraosha                  | claude-tg                                |
 | ---------------- | ------------------------ | ---------------------------------------- |
-| **Bot**          | @sraosha_saheb_bot       | @claude_code_saheb_bot                   |
+| **Bot**          | Votre bot Sraosha dédié  | Votre bot Claude Telegram                |
 | **Rôle**         | Wake layer / status      | Conversation complète avec Claude        |
 | **Daemon**       | Oui (launchd, permanent) | Non (lancé à la demande via tmux)        |
-| **Intelligence** | Aucune (commandes fixes) | Opus 4.7 (Claude complet)                |
+| **Intelligence** | Aucune (commandes fixes) | Claude complet                           |
 | **TCC risk**     | Aucun                    | Possible (selon la tâche)                |
 | **Lancement**    | Automatique (launchd)    | Via Sraosha `/tg` (tmux) ou manuellement |
 
@@ -79,14 +79,14 @@ tmux new-session -d -s claude-tg -c $HOME \
 - Le CWD `$HOME` est déjà trusté → pas de dialogue "workspace trust"
 - tmux fournit le TTY → Claude démarre en mode interactif
 - La session persiste en arrière-plan sans fenêtre visible
-- Prérequis : tmux installé (`/opt/homebrew/bin/tmux`)
+- Prérequis : tmux installé (`brew install tmux`)
 
 ## Architecture
 
 ```
-launchd (com.saheb.sraosha)
+launchd (com.sraosha)
   └─ node sraosha.mjs (PID permanent)
-       ├─ Telegram long-polling (@sraosha_saheb_bot)
+       ├─ Telegram long-polling
        ├─ /wake   → spawn claude --remote-control
        ├─ /tg     → tmux new-session → claude --channels (TTY fourni)
        └─ /task   → spawn claude -p (expérimental, restreint)
@@ -97,4 +97,4 @@ launchd (com.saheb.sraosha)
 - `~/.sraosha/sraosha.mjs` — code principal
 - `~/.sraosha/.env` — secrets (ne jamais afficher)
 - `~/.sraosha/sraosha.log` — logs runtime
-- `~/Library/LaunchAgents/com.saheb.sraosha.plist` — config launchd
+- `~/Library/LaunchAgents/com.sraosha.plist` — config launchd

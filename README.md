@@ -11,7 +11,7 @@ Claude Code est un outil CLI puissant, mais toutes ses fonctionnalités (Remote 
 ## Architecture
 
 ```
-iPhone → Telegram → Sraosha (daemon @sraosha_saheb_bot)
+iPhone → Telegram → Sraosha (daemon @your_sraosha_bot)
                          ├─ /wake   → claude --remote-control → App Claude
                          ├─ /tg     → tmux → claude --channels (Telegram officiel)
                          └─ /status → état complet
