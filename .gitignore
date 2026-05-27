@@ -3,3 +3,5 @@ node_modules/
 *.log
 stdout.log
 stderr.log
+package-lock.json
+*.backup-*

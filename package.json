@@ -1,7 +1,7 @@
 {
   "name": "sraosha",
-  "version": "1.3.0",
-  "description": "Wake-on-LAN for Claude Code — remote wake daemon via Telegram",
+  "version": "2.0.0",
+  "description": "Wake layer for Claude Code — remote wake + Telegram channel launcher via daemon",
   "main": "sraosha.mjs",
   "type": "module",
   "scripts": {

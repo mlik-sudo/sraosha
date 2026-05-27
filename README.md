@@ -1,6 +1,6 @@
 # Sraosha
 
-**Wake-on-LAN intelligent pour Claude Code** — un daemon Node.js qui réveille Claude Code à distance via Telegram.
+**Wake layer minimal pour Claude Code** — un daemon Node.js qui réveille Claude Code et lance le canal Telegram officiel, le tout depuis un iPhone.
 
 ## Le problème
 
@@ -11,25 +11,31 @@ Claude Code est un outil CLI puissant, mais toutes ses fonctionnalités (Remote 
 ## Architecture
 
 ```
-iPhone → Telegram → Sraosha (daemon) → claude --remote-control → App Claude (Remote Control)
-                                      → claude -p (tâche headless) → résultat → Telegram
+iPhone → Telegram → Sraosha (daemon @sraosha_saheb_bot)
+                         ├─ /wake   → claude --remote-control → App Claude
+                         ├─ /tg     → tmux → claude --channels (Telegram officiel)
+                         └─ /status → état complet
 ```
 
-- **Long polling Telegram** : connexion passive, quasi-zero CPU/réseau
-- **launchd** : persistance système macOS (survit reboot + crash)
-- **Bot dédié** : séparé du canal Claude Code pour éviter les conflits de polling
-- **Health check silencieux** : toutes les 6h, log-only, alerte après 3 échecs
+Trois couches distinctes :
+
+| Couche                  | Responsable                | Rôle                           |
+| ----------------------- | -------------------------- | ------------------------------ |
+| **Wake layer**          | Sraosha                    | Réveiller / préparer Claude    |
+| **Communication layer** | claude-tg / Remote Control | Conversation avec Claude       |
+| **Permission boundary** | macOS TCC                  | Permissions locales uniquement |
 
 ## Commandes
 
-| Commande         | Description                                         |
-| ---------------- | --------------------------------------------------- |
-| `/wake`          | Lancer une session Claude Code en Remote Control    |
-| `/wake!force`    | Forcer le lancement même si une session existe      |
-| `/status`        | Voir les sessions Claude Code actives               |
-| `/task <prompt>` | Exécuter une tâche headless et recevoir le résultat |
-| `/ping`          | Vérifier que Sraosha est vivant                     |
-| `/help`          | Afficher les commandes                              |
+| Commande      | Description                                         |
+| ------------- | --------------------------------------------------- |
+| `/ping`       | Vérifier que Sraosha est vivant                     |
+| `/status`     | État complet : daemon, sessions, claude-tg, TCC     |
+| `/wake`       | Lancer Claude Code en Remote Control                |
+| `/wake force` | Forcer le lancement même si une session existe      |
+| `/tg`         | Lancer claude-tg via tmux (canal Telegram officiel) |
+| `/task`       | ⚠️ Expérimental, restreint (blocklist TCC)          |
+| `/help`       | Afficher les commandes                              |
 
 ## Installation
 
@@ -37,8 +43,9 @@ iPhone → Telegram → Sraosha (daemon) → claude --remote-control → App Cla
 
 - macOS
 - Node.js 20+
-- Claude Code CLI installé (`claude`)
-- Un bot Telegram (créé via [@BotFather](https://t.me/BotFather))
+- Claude Code CLI (`claude`)
+- tmux (`brew install tmux`)
+- Un bot Telegram dédié (créé via [@BotFather](https://t.me/BotFather))
 
 ### Setup
 
@@ -60,18 +67,43 @@ which claude
 # Mettre le chemin complet dans .env
 
 # 5. Installer le daemon launchd
-cp com.saheb.sraosha.plist ~/Library/LaunchAgents/
+cp com.sraosha.plist.example ~/Library/LaunchAgents/com.sraosha.plist
 # IMPORTANT: éditer le plist pour adapter les chemins à votre système
-launchctl load ~/Library/LaunchAgents/com.saheb.sraosha.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.sraosha.plist
 
 # 6. Vérifier
 launchctl list | grep sraosha
-cat ~/.sraosha/sraosha.log
+tail ~/.sraosha/sraosha.log
 ```
 
 ### Obtenir votre Telegram User ID
 
 Envoyez `/start` à [@userinfobot](https://t.me/userinfobot) sur Telegram.
+
+## Comment ça marche
+
+### `/tg` — la commande clé
+
+`claude --channels` nécessite un TTY (terminal interactif). Un daemon launchd n'en a pas.
+
+**Solution** : Sraosha crée une session tmux détachée qui fournit le TTY :
+
+```bash
+tmux new-session -d -s claude-tg -c $HOME \
+  "claude --channels 'plugin:telegram@claude-plugins-official'"
+```
+
+- Le CWD `$HOME` est déjà trusté → pas de dialogue "workspace trust"
+- tmux fournit le TTY → Claude démarre en mode interactif
+- La session persiste en arrière-plan sans fenêtre visible
+
+### `/wake` — Remote Control
+
+Lance `claude --remote-control` en arrière-plan. Utilisez l'app Claude sur iPhone pour prendre le contrôle.
+
+### `/task` — expérimental
+
+Lance `claude -p` avec des outils restreints (`Read`, `Bash(git *)`). Bloque les commandes qui déclenchent macOS TCC (osascript, Apple Music, Finder, etc.).
 
 ## Sécurité
 
@@ -79,15 +111,18 @@ Envoyez `/start` à [@userinfobot](https://t.me/userinfobot) sur Telegram.
 - Seul l'utilisateur autorisé (via `ALLOWED_USER_ID`) peut envoyer des commandes
 - Les messages d'utilisateurs non autorisés sont silencieusement ignorés
 - Aucun port réseau n'est ouvert (long polling = connexion sortante uniquement)
-- Le health check ne notifie que sur anomalie (pas de spam)
+- `/task` utilise une blocklist TCC pour éviter les dialogues de permissions macOS
+- `/task` restreint les outils Claude à `Read` et `Bash(git *)` uniquement
 
 ## Design Philosophy
 
-> Sraosha doit rester connectée, mais pas constamment active.
-> Comme un gardien à la porte : elle écoute, elle note, elle réveille seulement quand il y a une vraie raison.
+Sraosha est un **interrupteur**, pas un intermédiaire.
 
-- **v1.x** : écoute passive événementielle (réactif uniquement)
-- **v2.0** (futur) : heartbeat léger toutes les 5h pour digest et routage conditionnel
+- Elle réveille Claude, elle ne le remplace pas
+- Elle rapporte l'état, elle ne prend pas de décisions
+- Elle respecte la frontière des permissions macOS (TCC)
+
+Voir [SRAOSHA_DESIGN.md](SRAOSHA_DESIGN.md) pour le document d'architecture complet.
 
 ## Nom
 
